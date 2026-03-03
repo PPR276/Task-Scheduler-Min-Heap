@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Scheduler | Min Heap Priority System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #6a11cb;
+            --secondary: #2575fc;
+            --accent: #ff6b6b;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --gray: #6c757d;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            animation: fadeIn 0.8s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        header {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(30deg);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 25px;
+            gap: 25px;
+        }
+        
+        .input-section, .task-section {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+        }
+        
+        .input-section:hover, .task-section:hover {
+            transform: translateY(-5px);
+        }
+        
+        h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        h2 i {
+            font-size: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5ee;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background-color: var(--light);
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
+            outline: none;
+        }
+        
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        
+        .btn {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 14px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(106, 17, 203, 0.2);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(106, 17, 203, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-clear {
+            background: linear-gradient(to right, var(--danger), #ff6b6b);
+        }
+        
+        .btn-success {
+            background: linear-gradient(to right, var(--success), #27ae60);
+        }
+        
+        .task-list {
+            margin-top: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .task-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .task-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .task-list::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+        
+        .task-item {
+            background: white;
+            border-left: 5px solid var(--primary);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .task-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .task-info h3 {
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+        
+        .task-info p {
+            color: var(--gray);
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .priority {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            box-shadow: 0 3px 8px rgba(106, 17, 203, 0.2);
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .message {
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 600;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .success {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(46, 204, 113, 0.3);
+        }
+        
+        .error {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+        
+        .info {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+        
+        .deadline {
+            color: var(--danger);
+            font-weight: 600;
+        }
+        
+        .duration {
+            color: var(--secondary);
+            font-weight: 600;
+        }
+        
+        .urgent {
+            border-left-color: var(--danger);
+            background-color: rgba(231, 76, 60, 0.05);
+        }
+        
+        .due-soon {
+            border-left-color: var(--warning);
+            background-color: rgba(243, 156, 18, 0.05);
+        }
+        
+        .on-track {
+            border-left-color: var(--success);
+            background-color: rgba(46, 204, 113, 0.05);
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            padding: 20px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border-radius: 15px;
+            color: white;
+            box-shadow: 0 8px 20px rgba(106, 17, 203, 0.2);
+        }
+        
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray);
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #d1d1d1;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--gray);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        
+        .icon-btn:hover {
+            color: var(--primary);
+            background: rgba(106, 17, 203, 0.1);
+        }
+        
+        .icon-btn.delete:hover {
+            color: var(--danger);
+            background: rgba(231, 76, 60, 0.1);
+        }
+        
+        .heap-info {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .heap-info p {
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .heap-info strong {
+            color: var(--primary);
+        }
+
+        /* Emoji Feedback Styles */
+        .emoji-feedback {
+            text-align: center;
+            margin: 15px 0;
+            font-size: 2.5rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .feedback-message {
+            text-align: center;
+            color: var(--gray);
+            font-style: italic;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .task-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .task-actions {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-tasks"></i> Task Scheduler</h1>
+            <p class="subtitle">Min Heap Priority System with Duration & Deadline Tracking</p>
+        </header>
+        
+        <div class="content">
+            <section class="input-section">
+                <h2><i class="fas fa-plus-circle"></i> Add New Task</h2>
+                <div class="form-group">
+                    <label for="taskName"><i class="fas fa-pencil-alt"></i> Task Name</label>
+                    <input type="text" id="taskName" placeholder="Enter task name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="taskPriority"><i class="fas fa-exclamation-circle"></i> Priority (1-10, 1 is highest)</label>
+                    <input type="number" id="taskPriority" min="1" max="10" value="5">
+                </div>
+                
+                <div class="form-group">
+                    <label for="taskDuration"><i class="fas fa-clock"></i> Duration (hours)</label>
+                    <input type="number" id="taskDuration" min="0.5" max="100" step="0.5" value="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="taskDeadline"><i class="fas fa-calendar-alt"></i> Deadline</label>
+                    <input type="date" id="taskDeadline">
+                </div>
+                
+                <div class="form-group">
+                    <label for="taskDescription"><i class="fas fa-align-left"></i> Description</label>
+                    <textarea id="taskDescription" placeholder="Enter task description"></textarea>
+                </div>
+                
+                <button id="addTaskBtn" class="btn"><i class="fas fa-plus"></i> Add Task to Heap</button>
+                
+                <div class="controls">
+                    <button id="getNextBtn" class="btn"><i class="fas fa-arrow-right"></i> Get Next Task</button>
+                    <button id="completeTaskBtn" class="btn btn-success"><i class="fas fa-check"></i> Complete Task</button>
+                    <button id="clearTasksBtn" class="btn btn-clear"><i class="fas fa-trash"></i> Clear Heap</button>
+                </div>
+                
+                <div id="message" class="message"></div>
+                
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalTasks">0</div>
+                        <div class="stat-label">Total Tasks</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="urgentTasks">0</div>
+                        <div class="stat-label">Urgent</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalDuration">0h</div>
+                        <div class="stat-label">Total Duration</div>
+                    </div>
+                </div>
+
+                <div class="heap-info">
+                    <h3><i class="fas fa-diagram-project"></i> Min Heap Status</h3>
+                    <p><strong>Heap Size:</strong> <span id="heapSize">0</span></p>
+                    <p><strong>Next Task:</strong> <span id="nextTask">None</span></p>
+                    <p><strong>Heap Efficiency:</strong> <span id="heapEfficiency">O(log n) operations</span></p>
+                </div>
+            </section>
+            
+            <section class="task-section">
+                <h2><i class="fas fa-list-check"></i> Priority Task Queue</h2>
+                
+                <!-- Emoji Feedback Section -->
+                <div id="emojiFeedback"></div>
+                <div id="feedbackMessage" class="feedback-message"></div>
+                
+                <div class="task-list" id="taskList">
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>No tasks in heap</h3>
+                        <p>Add a task to see the priority queue</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Real Min Heap Implementation
+        class MinHeap {
+            constructor() {
+                this.heap = [];
+            }
+            
+            // Helper methods to navigate the tree
+            getParentIndex(i) { 
+                return Math.floor((i - 1) / 2); 
+            }
+            
+            getLeftChildIndex(i) { 
+                return 2 * i + 1; 
+            }
+            
+            getRightChildIndex(i) { 
+                return 2 * i + 2; 
+            }
+            
+            hasLeftChild(i) { 
+                return this.getLeftChildIndex(i) < this.heap.length; 
+            }
+            
+            hasRightChild(i) { 
+                return this.getRightChildIndex(i) < this.heap.length; 
+            }
+            
+            // Swap two elements
+            swap(i, j) {
+                [this.heap[i], this.heap[j]] = [this.heap[j], this.heap[i]];
+            }
+            
+            // Get minimum without removing (O(1) time)
+            peek() {
+                if (this.heap.length === 0) return null;
+                return this.heap[0];
+            }
+            
+            // Add new element (O(log n) time)
+            insert(task) {
+                this.heap.push(task);
+                this.heapifyUp(); // Restore heap property
+            }
+            
+            // Remove and return minimum (O(log n) time)
+            extractMin() {
+                if (this.heap.length === 0) return null;
+                
+                const min = this.heap[0]; // Root is always min
+                const last = this.heap.pop();
+                
+                if (this.heap.length > 0) {
+                    this.heap[0] = last; // Move last to root
+                    this.heapifyDown(); // Restore heap property
+                }
+                
+                return min;
+            }
+            
+            // Move element up to maintain heap property
+            heapifyUp() {
+                let index = this.heap.length - 1; // Start at last element
+                
+                while (index > 0) {
+                    const parentIndex = this.getParentIndex(index);
+                    
+                    // If parent is smaller or equal, we're done
+                    if (this.heap[parentIndex].priority <= this.heap[index].priority) 
+                        break;
+                    
+                    // Swap with parent if parent is larger
+                    this.swap(parentIndex, index);
+                    index = parentIndex; // Move up to parent position
+                }
+            }
+            
+            // Move element down to maintain heap property
+            heapifyDown() {
+                let index = 0; // Start at root
+                
+                while (this.hasLeftChild(index)) {
+                    // Find smaller child
+                    let smallerChildIndex = this.getLeftChildIndex(index);
+                    
+                    if (this.hasRightChild(index) && 
+                        this.heap[this.getRightChildIndex(index)].priority < 
+                        this.heap[smallerChildIndex].priority) {
+                        smallerChildIndex = this.getRightChildIndex(index);
+                    }
+                    
+                    // If current is smaller than both children, we're done
+                    if (this.heap[index].priority <= this.heap[smallerChildIndex].priority) 
+                        break;
+                    
+                    // Swap with smaller child
+                    this.swap(index, smallerChildIndex);
+                    index = smallerChildIndex; // Move down to child position
+                }
+            }
+            
+            size() { 
+                return this.heap.length; 
+            }
+            
+            isEmpty() { 
+                return this.heap.length === 0; 
+            }
+            
+            clear() { 
+                this.heap = []; 
+            }
+            
+            // Get all tasks in priority order (for display)
+            getAllTasks() {
+                // Create a temporary heap to preserve the original
+                const tempHeap = new MinHeap();
+                const tasks = [];
+                
+                // Extract all tasks in order
+                const heapCopy = [...this.heap];
+                while (heapCopy.length > 0) {
+                    const task = this.extractMinFromArray(heapCopy);
+                    if (task) {
+                        tasks.push(task);
+                        tempHeap.insert(task);
+                    }
+                }
+                
+                // Restore the heap
+                this.heap = tempHeap.heap;
+                return tasks;
+            }
+            
+            // Helper method for getAllTasks
+            extractMinFromArray(arr) {
+                if (arr.length === 0) return null;
+                
+                const min = arr[0];
+                const last = arr.pop();
+                
+                if (arr.length > 0) {
+                    arr[0] = last;
+                    this.heapifyDownArray(arr, 0);
+                }
+                
+                return min;
+            }
+            
+            heapifyDownArray(arr, index) {
+                while (this.getLeftChildIndex(index) < arr.length) {
+                    let smallerChildIndex = this.getLeftChildIndex(index);
+                    const rightChildIndex = this.getRightChildIndex(index);
+                    
+                    if (rightChildIndex < arr.length && 
+                        arr[rightChildIndex].priority < arr[smallerChildIndex].priority) {
+                        smallerChildIndex = rightChildIndex;
+                    }
+                    
+                    if (arr[index].priority <= arr[smallerChildIndex].priority) break;
+                    
+                    [arr[index], arr[smallerChildIndex]] = [arr[smallerChildIndex], arr[index]];
+                    index = smallerChildIndex;
+                }
+            }
+        }
+
+        // Task Scheduler using Min Heap
+        class TaskScheduler {
+            constructor() {
+                this.heap = new MinHeap();
+                this.nextId = 1;
+                this.completedTasks = [];
+            }
+            
+            addTask(taskData) {
+                const task = {
+                    id: this.nextId++,
+                    ...taskData,
+                    addedAt: new Date()
+                };
+                
+                this.heap.insert(task);
+                return task.id;
+            }
+            
+            getNextTask() {
+                return this.heap.peek();
+            }
+            
+            completeNextTask() {
+                const task = this.heap.extractMin();
+                if (task) {
+                    task.completedAt = new Date();
+                    this.completedTasks.push(task);
+                }
+                return task;
+            }
+            
+            getAllTasks() {
+                return this.heap.getAllTasks();
+            }
+            
+            clearAllTasks() {
+                this.heap.clear();
+            }
+            
+            getStats() {
+                const tasks = this.getAllTasks();
+                const now = new Date();
+                
+                const urgentTasks = tasks.filter(task => {
+                    const deadline = new Date(task.deadline);
+                    const daysUntilDeadline = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
+                    return daysUntilDeadline <= 2;
+                });
+                
+                const totalDuration = tasks.reduce((total, task) => total + task.duration, 0);
+                
+                return {
+                    totalTasks: tasks.length,
+                    urgentTasks: urgentTasks.length,
+                    totalDuration: totalDuration,
+                    heapSize: this.heap.size()
+                };
+            }
+            
+            getTaskStatus(task) {
+                const now = new Date();
+                const deadline = new Date(task.deadline);
+                const daysUntilDeadline = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
+                
+                if (daysUntilDeadline <= 1) return 'urgent';
+                if (daysUntilDeadline <= 3) return 'due-soon';
+                return 'on-track';
+            }
+        }
+
+        // Initialize the task scheduler
+        const taskScheduler = new TaskScheduler();
+        
+        // DOM elements
+        const taskNameInput = document.getElementById('taskName');
+        const taskPriorityInput = document.getElementById('taskPriority');
+        const taskDurationInput = document.getElementById('taskDuration');
+        const taskDeadlineInput = document.getElementById('taskDeadline');
+        const taskDescriptionInput = document.getElementById('taskDescription');
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        const getNextBtn = document.getElementById('getNextBtn');
+        const completeTaskBtn = document.getElementById('completeTaskBtn');
+        const clearTasksBtn = document.getElementById('clearTasksBtn');
+        const taskList = document.getElementById('taskList');
+        const messageDiv = document.getElementById('message');
+        const totalTasksElement = document.getElementById('totalTasks');
+        const urgentTasksElement = document.getElementById('urgentTasks');
+        const totalDurationElement = document.getElementById('totalDuration');
+        const heapSizeElement = document.getElementById('heapSize');
+        const nextTaskElement = document.getElementById('nextTask');
+        const emojiFeedback = document.getElementById('emojiFeedback');
+        const feedbackMessage = document.getElementById('feedbackMessage');
+        
+        // Set default deadline to tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        taskDeadlineInput.valueAsDate = tomorrow;
+        
+        // Function to show emoji feedback based on task count
+        function updateEmojiFeedback(taskCount) {
+            let emoji = '';
+            let message = '';
+            
+            if (taskCount === 0) {
+                emoji = '😴';
+                message = 'No tasks! Time to relax or add some work!';
+            } else if (taskCount <= 2) {
+                emoji = '😊';
+                message = 'Light workload! You got this!';
+            } else if (taskCount <= 5) {
+                emoji = '😐';
+                message = 'Moderate workload. Stay focused!';
+            } else if (taskCount <= 8) {
+                emoji = '😅';
+                message = 'Busy schedule! Prioritize carefully!';
+            } else {
+                emoji = '😱';
+                message = 'Heavy workload! Consider delegating or breaking down tasks!';
+            }
+            
+            emojiFeedback.innerHTML = `<div class="emoji-feedback">${emoji}</div>`;
+            feedbackMessage.textContent = message;
+        }
+        
+        // Function to show messages
+        function showMessage(text, type = 'info') {
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            setTimeout(() => {
+                messageDiv.textContent = '';
+                messageDiv.className = 'message';
+            }, 3000);
+        }
+        
+        // Function to update the task list
+        function updateTaskList() {
+            taskList.innerHTML = '';
+            
+            const tasks = taskScheduler.getAllTasks();
+            const taskCount = tasks.length;
+            
+            // Update emoji feedback
+            updateEmojiFeedback(taskCount);
+            
+            if (taskCount === 0) {
+                taskList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>No tasks in heap</h3>
+                        <p>Add a task to see the priority queue</p>
+                    </div>
+                `;
+                updateStats();
+                return;
+            }
+            
+            tasks.forEach(task => {
+                const taskItem = document.createElement('div');
+                const status = taskScheduler.getTaskStatus(task);
+                
+                taskItem.className = `task-item ${status}`;
+                
+                const deadlineDate = new Date(task.deadline);
+                const formattedDeadline = deadlineDate.toLocaleDateString();
+                
+                // Calculate days until deadline
+                const now = new Date();
+                const daysUntilDeadline = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24));
+                let deadlineText = `${formattedDeadline}`;
+                
+                if (daysUntilDeadline === 0) {
+                    deadlineText = `Today (${formattedDeadline})`;
+                } else if (daysUntilDeadline === 1) {
+                    deadlineText = `Tomorrow (${formattedDeadline})`;
+                } else if (daysUntilDeadline > 1) {
+                    deadlineText = `In ${daysUntilDeadline} days (${formattedDeadline})`;
+                } else {
+                    deadlineText = `Overdue (${formattedDeadline})`;
+                }
+                
+                taskItem.innerHTML = `
+                    <div class="task-info">
+                        <h3>${task.name}</h3>
+                        <p>${task.description}</p>
+                        <p class="duration"><i class="fas fa-clock"></i> Duration: ${task.duration} hours</p>
+                        <p class="deadline"><i class="fas fa-calendar-alt"></i> Deadline: ${deadlineText}</p>
+                    </div>
+                    <div class="task-actions">
+                        <span class="priority">P${task.priority}</span>
+                    </div>
+                `;
+                
+                taskList.appendChild(taskItem);
+            });
+            
+            updateStats();
+        }
+        
+        // Function to update statistics and heap info
+        function updateStats() {
+            const stats = taskScheduler.getStats();
+            totalTasksElement.textContent = stats.totalTasks;
+            urgentTasksElement.textContent = stats.urgentTasks;
+            totalDurationElement.textContent = `${stats.totalDuration}h`;
+            heapSizeElement.textContent = stats.heapSize;
+            
+            const nextTask = taskScheduler.getNextTask();
+            nextTaskElement.textContent = nextTask ? 
+                `${nextTask.name} (Priority: ${nextTask.priority})` : 'None';
+        }
+        
+        // Event listeners
+        addTaskBtn.addEventListener('click', () => {
+            const name = taskNameInput.value.trim();
+            const priority = parseInt(taskPriorityInput.value);
+            const duration = parseFloat(taskDurationInput.value);
+            const deadline = taskDeadlineInput.value;
+            const description = taskDescriptionInput.value.trim();
+            
+            if (!name) {
+                showMessage('Please enter a task name', 'error');
+                return;
+            }
+            
+            if (isNaN(priority) || priority < 1 || priority > 10) {
+                showMessage('Please enter a valid priority between 1 and 10', 'error');
+                return;
+            }
+            
+            if (isNaN(duration) || duration <= 0) {
+                showMessage('Please enter a valid duration', 'error');
+                return;
+            }
+            
+            if (!deadline) {
+                showMessage('Please select a deadline', 'error');
+                return;
+            }
+            
+            const task = {
+                name,
+                priority,
+                duration,
+                deadline,
+                description
+            };
+            
+            taskScheduler.addTask(task);
+            updateTaskList();
+            
+            showMessage(`Task "${name}" added to heap with priority ${priority}`, 'success');
+            
+            // Clear input fields
+            taskNameInput.value = '';
+            taskDescriptionInput.value = '';
+            taskPriorityInput.value = '5';
+            taskDurationInput.value = '1';
+            
+            // Set default deadline to tomorrow
+            const newTomorrow = new Date();
+            newTomorrow.setDate(newTomorrow.getDate() + 1);
+            taskDeadlineInput.valueAsDate = newTomorrow;
+        });
+        
+        getNextBtn.addEventListener('click', () => {
+            const nextTask = taskScheduler.getNextTask();
+            
+            if (!nextTask) {
+                showMessage('Heap is empty. No tasks to peek.', 'error');
+                return;
+            }
+            
+            const deadlineDate = new Date(nextTask.deadline);
+            const formattedDeadline = deadlineDate.toLocaleDateString();
+            
+            showMessage(`Next task: "${nextTask.name}" (Priority: ${nextTask.priority}, Duration: ${nextTask.duration}h, Deadline: ${formattedDeadline})`, 'info');
+        });
+        
+        completeTaskBtn.addEventListener('click', () => {
+            const completedTask = taskScheduler.completeNextTask();
+            
+            if (!completedTask) {
+                showMessage('Heap is empty. No tasks to complete.', 'error');
+                return;
+            }
+            
+            showMessage(`Task "${completedTask.name}" completed!`, 'success');
+            updateTaskList();
+        });
+        
+        clearTasksBtn.addEventListener('click', () => {
+            if (taskScheduler.heap.isEmpty()) {
+                showMessage('Heap is already empty', 'info');
+                return;
+            }
+            
+            if (confirm('Are you sure you want to clear all tasks from the heap?')) {
+                taskScheduler.clearAllTasks();
+                updateTaskList();
+                showMessage('Heap cleared successfully', 'success');
+            }
+        });
+        
+        // Initialize the UI
+        updateTaskList();
+    </script>
+</body>
+</html>
