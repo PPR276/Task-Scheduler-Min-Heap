@@ -2,6 +2,9 @@
 
 A web-based Task Scheduling Application that implements a real Min Heap data structure to manage tasks based on priority. Built as a Data Structures capstone project.
 
+🌐 Live Demo:
+https://ppr276.github.io/Task-Scheduler-Min-Heap/
+
 ## 📌 Overview
 
 This project demonstrates the practical implementation of a **Min Heap (Priority Queue)** to efficiently manage tasks based on priority levels. 
